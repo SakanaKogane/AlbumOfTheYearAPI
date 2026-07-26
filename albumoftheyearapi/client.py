@@ -1,9 +1,9 @@
-""" All methods used to get site data """
+"""All methods used to get site data"""
 
-from albumoftheyearapi.user import UserMethods
-from albumoftheyearapi.artist import ArtistMethods
-from albumoftheyearapi.album import AlbumMethods
-from albumoftheyearapi.genre import GenreMethods
+from .user import UserMethods
+from .artist import ArtistMethods
+from .album import AlbumMethods
+from .genre import GenreMethods
 
 
 class AOTY(UserMethods, ArtistMethods, AlbumMethods, GenreMethods):

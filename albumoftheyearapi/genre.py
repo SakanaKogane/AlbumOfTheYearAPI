@@ -1,5 +1,6 @@
 """Genre album rankings from albumoftheyear.org."""
 
+from .config import AOTY_API_USER_AGENT
 import json
 import datetime
 from urllib.request import Request, urlopen
@@ -9,11 +10,11 @@ from bs4 import BeautifulSoup
 # Maps friendly genre names to their URL slugs.
 # Accepts either a key from this map (e.g. "rock") or a raw slug (e.g. "7-rock").
 GENRE_MAP = {
-    "indie rock":           "1-indie-rock",
-    "electronic":                 "6-electronic",
-    "rock":                 "7-rock",
-    "pop":                  "15-pop",
-    "metal":               "40-metal",
+    "indie rock": "1-indie-rock",
+    "electronic": "6-electronic",
+    "rock": "7-rock",
+    "pop": "15-pop",
+    "metal": "40-metal",
 }
 
 
@@ -36,7 +37,7 @@ class GenreMethods:
 
     def __set_genre_page(self, url):
         self.genre_page_url = url
-        req = Request(url, headers={"User-Agent": "Mozilla/6.0"})
+        req = Request(url, headers={"User-Agent": AOTY_API_USER_AGENT})
         ugly_page = urlopen(req).read()
         self.genre_page = BeautifulSoup(ugly_page, "html.parser")
 
@@ -60,15 +61,19 @@ class GenreMethods:
             score = int(score_div.getText().strip()) if score_div else None
 
             score_text_div = row.find("div", class_="scoreText")
-            review_count = int(score_text_div.getText().split()[0]) if score_text_div else None
+            review_count = (
+                int(score_text_div.getText().split()[0]) if score_text_div else None
+            )
 
-            albums.append({
-                "rank": rank,
-                "name": name,
-                "date": date,
-                "score": score,
-                "review_count": review_count,
-            })
+            albums.append(
+                {
+                    "rank": rank,
+                    "name": name,
+                    "date": date,
+                    "score": score,
+                    "review_count": review_count,
+                }
+            )
         return albums
 
     def genre_albums(self, genre, year=None):

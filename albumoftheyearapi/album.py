@@ -1,3 +1,4 @@
+from .config import AOTY_API_USER_AGENT
 import json
 from urllib.request import Request, urlopen
 from bs4 import BeautifulSoup
@@ -49,7 +50,7 @@ class AlbumMethods:
         upcoming_albums = {}
         try:
             parsed_albums = self._get_upcoming_releases_by_page(page_number)
-        except:
+        except Exception:
             return json.dumps(
                 self._build_error_response(
                     "Page Limit Error", "The page number requested is out of range."
@@ -111,7 +112,7 @@ class AlbumMethods:
         ]
         try:
             return month_names[month_number - 1]
-        except:
+        except Exception:
             raise Exception("Invalid month number")
 
     def _get_upcoming_releases_by_page(self, page_number):
@@ -126,7 +127,7 @@ class AlbumMethods:
         return parsed_albums
 
     def _get_release_page_from_request(self, url):
-        request = Request(url, headers={"User-Agent": "Mozilla/6.0"})
+        request = Request(url, headers={"User-Agent": AOTY_API_USER_AGENT})
         unparsed_page = urlopen(request).read()
         release_page = BeautifulSoup(unparsed_page, "html.parser")
         return release_page

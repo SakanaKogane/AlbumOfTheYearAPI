@@ -1,13 +1,15 @@
+from .config import AOTY_API_USER_AGENT
 from urllib.request import Request, urlopen
 from bs4 import BeautifulSoup
 import json
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class UserMethods:
     """Methods for gettting a user's profile data"""
 
-
-class UserMethods:
     def __init__(self):
         self.user = ""
         self.url = ""
@@ -16,20 +18,22 @@ class UserMethods:
     def __set_user_page(self, user, url):
         self.user = user
         self.url = url
-        self.req = Request(self.url, headers={"User-Agent": "Mozilla/6.0"})
-        ugly_user_page = urlopen(self.req).read()
+        self.req = Request(self.url, headers={"User-Agent": AOTY_API_USER_AGENT})
+        urlopen_result = urlopen(self.req)
+        ugly_user_page = urlopen_result.read()
         self.user_page = BeautifulSoup(ugly_user_page, "html.parser")
+
+        # Returns if the request was redirected
+        return self.url != urlopen_result.url
 
     def user_rating_count(self, user):
         url = self.user_url + user
         if self.url != url:
             self.__set_user_page(user, url)
 
-        ratings_section = self.user_page.find(
-            href=f"/user/{self.user}/ratings/"
-        )
+        ratings_section = self.user_page.find(href=f"/user/{self.user}/ratings/")
         ratings_text = ratings_section.find(class_="profileStat").getText()
-        
+
         try:
             ratings = int(ratings_text.replace(",", "").strip())  # remove commas
         except ValueError:
@@ -50,7 +54,7 @@ class UserMethods:
             href="/user/{}".format(self.user) + "/reviews/"
         )
         reviews_text = reviews_section.find(class_="profileStat").getText()
-        
+
         try:
             review_count = int(reviews_text.replace(",", "").strip())  # remove commas
         except ValueError:
@@ -71,12 +75,12 @@ class UserMethods:
             href="/user/{}".format(self.user) + "/lists/"
         )
         lists_text = lists_section.find(class_="profileStat").getText()
-        
+
         try:
             lists = int(lists_text.replace(",", "").strip())  # remove commas
         except ValueError:
             lists = 0  # fallback if parsing fails
-            
+
         return lists
 
     def user_list_count_json(self, user):
@@ -92,12 +96,12 @@ class UserMethods:
             href="/user/{}".format(self.user) + "/followers/"
         )
         followers_text = followers_section.find(class_="profileStat").getText()
-        
+
         try:
             followers = int(followers_text.replace(",", "").strip())  # remove commas
         except ValueError:
             followers = 0  # fallback if parsing fails
-            
+
         return followers
 
     def user_follower_count_json(self, user):
@@ -126,10 +130,7 @@ class UserMethods:
 
         user_rating_distribution = []
         for i in range(11):
-            rating = (
-                user_rating_distribution_tags[i]
-                .getText()
-            )
+            rating = user_rating_distribution_tags[i].getText()
             if i == 0 or i == 10:
                 rating = rating[3:]
             else:
@@ -166,27 +167,17 @@ class UserMethods:
         ratings = self.user_page.find_all(class_="albumBlock")
         result = []
         for entry in ratings:
-            artist = (
-                entry.find(class_="artistTitle")
-                .getText()
-            )
-            album = (
-                entry.find(class_="albumTitle")
-                .getText()
-            )
-            rating = (
-                entry.find(class_="rating")
-                .getText()
-                .strip()
-            )
-            result.append({"artist": artist, "album": album, "rating": rating})
+            artist = entry.find(class_="artistTitle").getText()
+            album = entry.find(class_="albumTitle").getText()
+            rating = entry.find(class_="rating").getText().strip()
+            result.append({"artist": artist, "title": album, "rating": rating})
 
         return result
 
     def user_ratings_json(self, user, page=1):
         ratings_JSON = {"ratings": self.user_ratings(user, page)}
         return json.dumps(ratings_JSON)
-    
+
     def user_ratings_all(self, user, max_pages=None):
         """
         Returns all ratings across multiple pages for the user.
@@ -216,25 +207,92 @@ class UserMethods:
             seen_pages.add(first_album)
 
             for entry in ratings:
-                artist = (
-                    entry.find(class_="artistTitle")
-                    .getText()
-                )
-                album = (
-                    entry.find(class_="albumTitle")
-                    .getText()
-                )
-                rating = (
-                    entry.find(class_="rating")
-                    .getText()
-                    .strip()
-                )
-                all_ratings.append({"artist": artist, "album": album, "rating": rating})
+                artist = entry.find(class_="artistTitle").getText()
+                album = entry.find(class_="albumTitle").getText()
+                rating = entry.find(class_="rating").getText().strip()
+                all_ratings.append({"artist": artist, "title": album, "rating": rating})
 
             page += 1
 
         return all_ratings
 
+    def user_listened_all(self, user, year=None, max_pages=None):
+        """
+        Returns all listened across multiple pages for the user.
+        If year is set, only fetch listened from that year.
+        If max_pages is set, only fetches up to that many pages.
+        Prevents infinite loop by checking for duplicate/redirected pages.
+        """
+        all_listened = []
+        seen_pages = set()
+        page = 1
+
+        while True:
+            if max_pages and page > max_pages:
+                break
+
+            url = self.user_url + f"{user}/listened/{page}/"
+            if year is not None:
+                url += f"?y={year}"
+            redirected = self.__set_user_page(user, url)
+
+            listened = self.user_page.find_all(class_="albumBlock")
+            if not listened:  # stop when no more listened are found
+                break
+
+            # Use first album on page as a "fingerprint" to detect repeats
+            first_album = listened[0].getText(strip=True)
+            if first_album in seen_pages or redirected:
+                # We've looped back to an earlier page (redirected), stop here
+                break
+            seen_pages.add(first_album)
+            for entry in listened:
+                # Artist name
+                artist = entry.find(class_="artistTitle").getText()
+
+                # Release title
+                album = entry.find(class_="albumTitle").getText()
+
+                # Rating
+                if entry.find(class_="rating") is not None:
+                    rating = entry.find(class_="rating").getText().strip()
+                else:
+                    rating = "-1"
+
+                # Cover image
+                if entry.find(class_="image").find(class_="noCover") is not None:
+                    logger.error(
+                        f"Cover for '{album}' either missing or marked NSFW. Could not retrieve."
+                    )
+                    cover = ""
+                else:
+                    cover = (
+                        entry.find(class_="image")
+                        .find("img")["src"]
+                        .strip()
+                        .replace("cdn2", "cdn")
+                        .replace("200x0/", "")
+                    )
+
+                # Rating date
+                if entry.find(class_="ratingText") is not None:
+                    date = entry.find(class_="ratingText").getText().strip()
+                else:
+                    date = ""
+
+                all_listened.append(
+                    {
+                        "artist": artist,
+                        "title": album,
+                        "rating": rating,
+                        "cover": cover,
+                        "date": date,
+                    }
+                )
+
+            page += 1
+
+        return all_listened
 
     def user_perfect_scores(self, user):
         """Returns a list of the user's perfect score albums as structured data"""
@@ -248,18 +306,14 @@ class UserMethods:
 
         result = []
         for entry in albums:
-            artist = (
-                entry.find(class_="artistTitle")
-                .getText()
+            artist = entry.find(class_="artistTitle").getText()
+            album = entry.find(class_="albumTitle").getText()
+            result.append(
+                {
+                    "artist": artist,
+                    "title": album,
+                }
             )
-            album = (
-                entry.find(class_="albumTitle")
-                .getText()
-            )
-            result.append({
-                "artist": artist,
-                "album": album,
-            })
 
         return result
 
@@ -280,15 +334,9 @@ class UserMethods:
 
         result = []
         for entry in liked_music:
-            artist = (
-                entry.find(class_="artistTitle")
-                .getText()
-            )
-            album = (
-                entry.find(class_="albumTitle")
-                .getText()
-            )
-            result.append({"artist": artist, "album": album})
+            artist = entry.find(class_="artistTitle").getText()
+            album = entry.find(class_="albumTitle").getText()
+            result.append({"artist": artist, "title": album})
 
         return result
 
@@ -313,10 +361,12 @@ class UserMethods:
             artist_tag = entry.find(class_="artistTitle")
             album_tag = entry.find(class_="albumTitle")
             if artist_tag and album_tag:
-                result.append({
-                    "artist": artist_tag.getText(),
-                    "album": album_tag.getText(),
-                })
+                result.append(
+                    {
+                        "artist": artist_tag.getText(),
+                        "title": album_tag.getText(),
+                    }
+                )
 
         return result
 
@@ -338,18 +388,22 @@ class UserMethods:
             rating_tag = entry.find(class_="rating")
             rating = rating_tag.getText().strip() if rating_tag else ""
             review_div = entry.find(class_="albumReviewText")
-            review_text = review_div.get_text(separator="\n", strip=True) if review_div else ""
-            
+            review_text = (
+                review_div.get_text(separator="\n", strip=True) if review_div else ""
+            )
+
             # Strip button UI artifact
             if review_text.endswith("\nread more"):
-                review_text = review_text[:-len("\nread more")]
-                
-            result.append({
-                "artist": artist,
-                "album": album,
-                "rating": rating,
-                "review": review_text,
-            })
+                review_text = review_text[: -len("\nread more")]
+
+            result.append(
+                {
+                    "artist": artist,
+                    "title": album,
+                    "rating": rating,
+                    "review": review_text,
+                }
+            )
 
         if as_json:
             return json.dumps({"reviews": result})

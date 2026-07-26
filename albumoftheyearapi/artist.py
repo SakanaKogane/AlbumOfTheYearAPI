@@ -1,3 +1,4 @@
+from .config import AOTY_API_USER_AGENT
 import json
 from urllib.request import Request, urlopen
 from bs4 import BeautifulSoup
@@ -10,13 +11,13 @@ class ArtistMethods:
         self.artist = ""
         self.url = ""
         self.artist_url = "https://www.albumoftheyear.org/artist/"
-        
+
         self.albums = []
 
     def __set_artist_page(self, artist, url):
         self.artist = artist
         self.url = url
-        self.req = Request(self.url, headers={"User-Agent": "Mozilla/6.0"})
+        self.req = Request(self.url, headers={"User-Agent": AOTY_API_USER_AGENT})
         ugly_artist_page = urlopen(self.req).read()
         self.artist_page = BeautifulSoup(ugly_artist_page, "html.parser")
         self.__get_discography(artist)
@@ -27,7 +28,7 @@ class ArtistMethods:
             self.__set_artist_page(artist, url)
 
         return self.artist_page.find(class_=class_name).getText()
-    
+
     def __get_discography(self, artist):
         url = self.artist_url + artist + "/"
         if self.url != url:
@@ -44,7 +45,9 @@ class ArtistMethods:
             if element.name == "h2":
                 # New category found, update current_category
                 current_category = element.get_text(strip=True)
-                categorized_albums[current_category] = []  # Initialize list for this category
+                categorized_albums[
+                    current_category
+                ] = []  # Initialize list for this category
             elif element.name == "div" and current_category == "Similar Artists":
                 # Similar Artists is structured differently
                 album_title_div = element.find("div", class_="name")
@@ -57,15 +60,15 @@ class ArtistMethods:
                 if album_title_div:
                     album_name = album_title_div.get_text().strip()
                     categorized_albums[current_category].append(album_name)
-                
-        self.albums = categorized_albums.get('Albums', [])
-        self.mixtapes = categorized_albums.get('Mixtapes', [])
-        self.eps = categorized_albums.get('EPs', [])
-        self.live_albums = categorized_albums.get('Live Albums', [])
-        self.compilations = categorized_albums.get('Compilations', [])
-        self.singles = categorized_albums.get('SinglesView All', [])
-        self.appears_on = categorized_albums.get('Appears OnView All', [])
-        self.similar_artists_cat = categorized_albums.get('Similar Artists', [])
+
+        self.albums = categorized_albums.get("Albums", [])
+        self.mixtapes = categorized_albums.get("Mixtapes", [])
+        self.eps = categorized_albums.get("EPs", [])
+        self.live_albums = categorized_albums.get("Live Albums", [])
+        self.compilations = categorized_albums.get("Compilations", [])
+        self.singles = categorized_albums.get("SinglesView All", [])
+        self.appears_on = categorized_albums.get("Appears OnView All", [])
+        self.similar_artists_cat = categorized_albums.get("Similar Artists", [])
 
     def __get_community_data(self, artist):
         url = self.artist_url + artist + "/"
@@ -80,7 +83,7 @@ class ArtistMethods:
         for row in rows:
             # Find the div with class "songAlbum" inside this row
             song_album_div = row.find("td", class_="songAlbum")
-        
+
             if song_album_div:
                 # Find the <a> tag inside this div
                 link = song_album_div.find("a")
@@ -94,7 +97,7 @@ class ArtistMethods:
         url = self.artist_url + artist + "/"
         if self.url != url:
             self.__set_artist_page(artist, url)
-            
+
         return self.albums
 
     def artist_albums_json(self, artist):
@@ -105,7 +108,7 @@ class ArtistMethods:
         url = self.artist_url + artist + "/"
         if self.url != url:
             self.__set_artist_page(artist, url)
-            
+
         return self.mixtapes
 
     def artist_mixtapes_json(self, artist):
@@ -116,7 +119,7 @@ class ArtistMethods:
         url = self.artist_url + artist + "/"
         if self.url != url:
             self.__set_artist_page(artist, url)
-            
+
         return self.eps
 
     def artist_eps_json(self, artist):
@@ -154,7 +157,7 @@ class ArtistMethods:
         url = self.artist_url + artist + "/"
         if self.url != url:
             self.__set_artist_page(artist, url)
-        
+
         return self.singles
 
     def artist_singles_json(self, artist):
@@ -217,7 +220,7 @@ class ArtistMethods:
         url = self.artist_url + artist + "/"
         if self.url != url:
             self.__set_artist_page(artist, url)
-            
+
         return self.top_songs
 
     def artist_top_songs_json(self, artist):
@@ -228,7 +231,7 @@ class ArtistMethods:
         url = self.artist_url + artist + "/"
         if self.url != url:
             self.__set_artist_page(artist, url)
-            
+
         return self.similar_artists_cat
 
     def similar_artists_json(self, artist):
