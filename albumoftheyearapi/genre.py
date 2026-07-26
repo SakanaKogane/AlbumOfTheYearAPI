@@ -1,6 +1,5 @@
 """Genre album rankings from albumoftheyear.org."""
 
-from .config import AOTY_API_USER_AGENT
 import json
 import datetime
 from urllib.request import Request, urlopen
@@ -37,7 +36,7 @@ class GenreMethods:
 
     def __set_genre_page(self, url):
         self.genre_page_url = url
-        req = Request(url, headers={"User-Agent": AOTY_API_USER_AGENT})
+        req = Request(url, headers={"User-Agent": self.user_agent})
         ugly_page = urlopen(req).read()
         self.genre_page = BeautifulSoup(ugly_page, "html.parser")
 

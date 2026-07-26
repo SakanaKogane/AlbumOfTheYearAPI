@@ -1,4 +1,3 @@
-from .config import AOTY_API_USER_AGENT
 import json
 from urllib.request import Request, urlopen
 from bs4 import BeautifulSoup
@@ -15,7 +14,8 @@ class Album:
 
 
 class AlbumMethods:
-    def __init__(self):
+    def __init__(self, user_agent="Mozilla/5.0"):
+        self.user_agent = user_agent
         self.upcoming_album_class = "albumBlock five small"
         self.aoty_albums_per_page = 60
         self.page_limit = 21
@@ -127,7 +127,7 @@ class AlbumMethods:
         return parsed_albums
 
     def _get_release_page_from_request(self, url):
-        request = Request(url, headers={"User-Agent": AOTY_API_USER_AGENT})
+        request = Request(url, headers={"User-Agent": self.user_agent})
         unparsed_page = urlopen(request).read()
         release_page = BeautifulSoup(unparsed_page, "html.parser")
         return release_page

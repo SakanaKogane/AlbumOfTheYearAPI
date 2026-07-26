@@ -1,4 +1,3 @@
-from .config import AOTY_API_USER_AGENT
 import json
 from urllib.request import Request, urlopen
 from bs4 import BeautifulSoup
@@ -7,7 +6,8 @@ from bs4 import BeautifulSoup
 class ArtistMethods:
     """Initializes all methods that are used to get user data"""
 
-    def __init__(self):
+    def __init__(self, user_agent="Mozilla/5.0"):
+        self.user_agent = user_agent
         self.artist = ""
         self.url = ""
         self.artist_url = "https://www.albumoftheyear.org/artist/"
@@ -17,7 +17,7 @@ class ArtistMethods:
     def __set_artist_page(self, artist, url):
         self.artist = artist
         self.url = url
-        self.req = Request(self.url, headers={"User-Agent": AOTY_API_USER_AGENT})
+        self.req = Request(self.url, headers={"User-Agent": self.user_agent})
         ugly_artist_page = urlopen(self.req).read()
         self.artist_page = BeautifulSoup(ugly_artist_page, "html.parser")
         self.__get_discography(artist)

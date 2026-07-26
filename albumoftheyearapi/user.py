@@ -1,4 +1,3 @@
-from .config import AOTY_API_USER_AGENT
 from urllib.request import Request, urlopen
 from bs4 import BeautifulSoup
 import json
@@ -10,7 +9,8 @@ logger = logging.getLogger(__name__)
 class UserMethods:
     """Methods for gettting a user's profile data"""
 
-    def __init__(self):
+    def __init__(self, user_agent="Mozilla/5.0"):
+        self.user_agent = user_agent
         self.user = ""
         self.url = ""
         self.user_url = "https://www.albumoftheyear.org/user/"
@@ -18,7 +18,7 @@ class UserMethods:
     def __set_user_page(self, user, url):
         self.user = user
         self.url = url
-        self.req = Request(self.url, headers={"User-Agent": AOTY_API_USER_AGENT})
+        self.req = Request(self.url, headers={"User-Agent": self.user_agent})
         urlopen_result = urlopen(self.req)
         ugly_user_page = urlopen_result.read()
         self.user_page = BeautifulSoup(ugly_user_page, "html.parser")

@@ -9,10 +9,11 @@ from .genre import GenreMethods
 class AOTY(UserMethods, ArtistMethods, AlbumMethods, GenreMethods):
     """A light weight python library that acts as an API for https://www.albumoftheyear.org"""
 
-    def __init__(self):
+    def __init__(self, user_agent="Mozilla/5.0"):
         """Initializes the required variables for getting website data.
         Required for easier caching
         """
+        self.user_agent = user_agent
         self.user = ""
         self.artist = ""
         self.url = ""
