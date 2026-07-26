@@ -5,6 +5,7 @@ import datetime
 from urllib.request import Request, urlopen
 from bs4 import BeautifulSoup
 
+from .user_agent import UserAgentOwner
 
 # Maps friendly genre names to their URL slugs.
 # Accepts either a key from this map (e.g. "rock") or a raw slug (e.g. "7-rock").
@@ -17,10 +18,11 @@ GENRE_MAP = {
 }
 
 
-class GenreMethods:
+class GenreMethods(UserAgentOwner):
     """Methods for getting genre album rankings from albumoftheyear.org."""
 
-    def __init__(self):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.genre_page_url = ""
         self.genre_page = None
         self.genre_base_url = "https://www.albumoftheyear.org/genre/"

@@ -5,12 +5,14 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+from .user_agent import UserAgentOwner
 
-class UserMethods:
+
+class UserMethods(UserAgentOwner):
     """Methods for gettting a user's profile data"""
 
-    def __init__(self, user_agent="Mozilla/5.0"):
-        self.user_agent = user_agent
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.user = ""
         self.url = ""
         self.user_url = "https://www.albumoftheyear.org/user/"

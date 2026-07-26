@@ -2,12 +2,14 @@ import json
 from urllib.request import Request, urlopen
 from bs4 import BeautifulSoup
 
+from .user_agent import UserAgentOwner
 
-class ArtistMethods:
+
+class ArtistMethods(UserAgentOwner):
     """Initializes all methods that are used to get user data"""
 
-    def __init__(self, user_agent="Mozilla/5.0"):
-        self.user_agent = user_agent
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.artist = ""
         self.url = ""
         self.artist_url = "https://www.albumoftheyear.org/artist/"

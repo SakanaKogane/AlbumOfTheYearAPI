@@ -9,20 +9,8 @@ from .genre import GenreMethods
 class AOTY(UserMethods, ArtistMethods, AlbumMethods, GenreMethods):
     """A light weight python library that acts as an API for https://www.albumoftheyear.org"""
 
-    def __init__(self, user_agent="Mozilla/5.0"):
+    def __init__(self, user_agent="Mozilla/5.0", **kwargs):
         """Initializes the required variables for getting website data.
         Required for easier caching
         """
-        self.user_agent = user_agent
-        self.user = ""
-        self.artist = ""
-        self.url = ""
-        self.user_url = "https://www.albumoftheyear.org/user/"
-        self.artist_url = "https://www.albumoftheyear.org/artist/"
-        self.upcoming_album_class = "albumBlock five small"
-        self.aoty_albums_per_page = 60
-        self.page_limit = 21
-        # Genre stuff
-        self.genre_base_url = "https://www.albumoftheyear.org/genre/"
-        self.genre_page_url = ""
-        self.genre_page = None
+        super().__init__(user_agent=user_agent, **kwargs)

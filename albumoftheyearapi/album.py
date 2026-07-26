@@ -2,6 +2,8 @@ import json
 from urllib.request import Request, urlopen
 from bs4 import BeautifulSoup
 
+from .user_agent import UserAgentOwner
+
 
 class Album:
     def __init__(self, name, artist, date):
@@ -13,9 +15,9 @@ class Album:
         return json.dumps(self, default=lambda o: o.__dict__, sort_keys=True, indent=0)
 
 
-class AlbumMethods:
-    def __init__(self, user_agent="Mozilla/5.0"):
-        self.user_agent = user_agent
+class AlbumMethods(UserAgentOwner):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.upcoming_album_class = "albumBlock five small"
         self.aoty_albums_per_page = 60
         self.page_limit = 21
